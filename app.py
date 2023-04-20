@@ -30,7 +30,7 @@ def on_message(client, userdata, msg):
         door_status['doorOpen'] = True
     elif message == 'DOOR_CLOSED':
         door_status['doorOpen'] = False
-        
+ 
 client = mqtt_client.Client()
 client.on_connect = on_connect
 client.on_message = on_message
@@ -41,15 +41,33 @@ client.loop_start()
 def get_status():
     return jsonify(door_status)
 
+# @app.route('/api/toggle', methods=['POST'])
+# def toggle_lock():
+#     global door_status
+#     door_status['locked'] = not door_status['locked']
+
+#     lock_status = 'LOCK' if door_status['locked'] else 'UNLOCK'
+#     client.publish(topic, lock_status)
+    
+#     return jsonify(door_status)
+
 @app.route('/api/toggle', methods=['POST'])
 def toggle_lock():
     global door_status
-    door_status['locked'] = not door_status['locked']
+    if not door_status['locked'] and not door_status['doorOpen']:
+        door_status['locked'] = True
 
-    lock_status = 'LOCK' if door_status['locked'] else 'UNLOCK'
-    client.publish(topic, lock_status)
-    
+        lock_status = 'LOCK'
+        client.publish(topic, lock_status)
+
+    elif door_status['locked']:
+        door_status['locked'] = False
+
+        lock_status = 'UNLOCK'
+        client.publish(topic, lock_status)
+        print(door_status)   
     return jsonify(door_status)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
