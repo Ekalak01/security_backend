@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from paho.mqtt import client as mqtt_client
-
+import json
 app = Flask(__name__)
 CORS(app)
 
@@ -9,7 +9,7 @@ door_status = {'locked': True, 'peopleCount': 0, 'doorOpen': False}
 
 broker = 'test.mosquitto.org'
 port = 1883
-topic = '123'
+topic = '456'
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
@@ -30,7 +30,15 @@ def on_message(client, userdata, msg):
         door_status['doorOpen'] = True
     elif message == 'DOOR_CLOSED':
         door_status['doorOpen'] = False
- 
+    # update web page
+    update_webpage()
+
+def update_webpage():
+    global door_status
+    data = json.dumps(door_status)
+    # publish message to topic "update" with data as payload
+    client.publish("update", data)
+    
 client = mqtt_client.Client()
 client.on_connect = on_connect
 client.on_message = on_message
